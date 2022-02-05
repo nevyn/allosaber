@@ -36,9 +36,10 @@ class.Game(ui.View)
 local laneWidth = 0.4
 local layerHeight = 0.2
 
-function Game:_init()
+function Game:_init(song)
     self:super()
-    local songPath = "songs/Jaroslav Beck - Beat Saber"
+    self.song = song
+    local songPath = "songs/"..song
     local metaPath = songPath.."/Info.dat"
     local levelPath = songPath.."/Hard.dat"
     local assetPath = songPath.."/song.ogg"
@@ -57,8 +58,7 @@ function Game:_init()
 
     local d = 6.0
     self.board = self:addSubview(ui.Cube(ui.Bounds(0, -1.0, -d/2 - 0.5,   laneWidth*4, 0.05, d)))
-    self.board:setColor({0.7, 0.7, 0.7, 0.8})
-    self.stand = self:addSubview(ui.Cube(ui.Bounds(0, -1.6, 0.0,   0.4, 0.02, 0.4)))
+    self.board:setColor({0.7, 0.7, 0.7, 0.6})
 end
 
 function Game:awake()
@@ -79,8 +79,10 @@ end
 
 function Game:sleep()
     ui.View.sleep(self)
+    print("sleeping game")
     if self.beatAction then
         self.beatAction:cancel()
+        self.frameAction:cancel()
     end
 end
 
@@ -93,15 +95,31 @@ function Game:beat()
     local farBeat = self.currentBeat + self.farDelay*self.bps
 
     self:trySpawnNote(farBeat)
+
+    if self.endBeat and self.currentBeat > self.endBeat then
+        self:winGame()
+    end
 end
 
 function Game:frame()
     self:updateBoardedNotes()
 end
 
+function Game:winGame()
+    self.nav:push(Menu.createGameEnd(self.song, "You won!"))
+end
+
 function Game:trySpawnNote(farBeat)
     local nextNote = self.dat._notes[self.currentNoteIndex]
-    if nextNote and nextNote._time <= farBeat then
+    if not nextNote then
+        if not self.endBeat then
+            self.endBeat = self.noteBlocks[#self.noteBlocks].meta._time + self.bps
+            print("End of song is at beat", self.endBeat)
+        end
+        return
+    end
+
+    if nextNote._time <= farBeat then
         print("Spawning note", self.currentNoteIndex, "at", nextNote._time, "for farBeat", farBeat)
         self:spawnNote(nextNote)
         self.currentNoteIndex = self.currentNoteIndex + 1

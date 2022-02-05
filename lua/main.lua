@@ -4,7 +4,8 @@ local client = Client(
 )
 app = App(client)
 
-local Menu = require("menu")
+Menu = require("menu")
+Game = require("game")
 
 assets = {
     quit = ui.Asset.File("images/quit.png"),
