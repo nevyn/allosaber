@@ -117,6 +117,7 @@ function Game:spawnNote(noteMeta)
     note:positionForBeat(self.currentBeat)
     self:addSubview(note)
     table.insert(self.noteBlocks, note)
+    note:fadeIn()
 end
 
 function Game:removeNote(noteBlock, blockIndex)
@@ -187,6 +188,27 @@ function NoteBlock:positionForBeat(beat)
         -distance
     )
     self:setBounds()
+end
+
+function NoteBlock:fadeIn()
+    self:doWhenAwake(function()
+        self:addPropertyAnimation(PropertyAnimation{
+            path= "material.color.3",
+            from= 0,
+            to=   1,
+            duration = 0.3,
+            easing= "quadIn",
+        })    
+    end)
+    self.arrow:doWhenAwake(function()
+        self.arrow:addPropertyAnimation(PropertyAnimation{
+            path= "material.color.3",
+            from= 0,
+            to=   1,
+            duration = 0.3,
+            easing= "quadIn",
+        })    
+    end)
 end
 
 
