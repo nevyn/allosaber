@@ -13,7 +13,6 @@ app.assetManager:add(assets)
 
 local mainView = Menu.createMenu()
 
-
 app.mainView = mainView
 app:connect()
-app:run()
+app:run(1000)
