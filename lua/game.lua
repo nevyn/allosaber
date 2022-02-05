@@ -147,11 +147,11 @@ function NoteBlock:_init(meta)
     self:super(ui.Bounds(0,0,0,   s, s, s))
     self.meta = meta
     if meta._type == 0 then
-        self.color = {1, 0, 0, 1}
+        self.color = {1, 0, 0, 0}
     elseif meta._type == 1 then
-        self.color = {0, 0, 1, 1}
-    elseif meta._type == 2 then
-        self.color = {0.4, 0.4, 0.4, 1}
+        self.color = {0, 0, 1, 0}
+    elseif meta._type == 3 then
+        self.color = {0.4, 0.4, 0.4, 0}
     end
     self.arrow = self:addSubview(ui.Surface(ui.Bounds(0, 0, s/2+0.001,  s, s, s)))
     self.arrow:setTexture(assets.arrow)
@@ -166,6 +166,9 @@ function NoteBlock:_init(meta)
         self.arrow.bounds:rotate(-3.14/2, 0,0,1)
     elseif self.meta._cutDirection == 8 then
         self.arrow:setTexture(assets.dot)
+    end
+    if self.meta._type == 3 then
+        self.arrow:setTexture(assets.bomb)
     end
 end
 

@@ -10,6 +10,7 @@ assets = {
     quit = ui.Asset.File("images/quit.png"),
     arrow = ui.Asset.File("images/arrow.png"),
     dot = ui.Asset.File("images/dot.png"),
+    bomb = ui.Asset.File("images/bomb.png"),
 }
 app.assetManager:add(assets)
 
