@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+HERE=`dirname $0`
+LUAJIT="$HERE/deps/luajit-bin/luajit"
+
+do_help () {
+    echo "Usage: assist <verb>"
+    echo "Verbs:"
+    echo "    fetch"
+    echo "        Download the version of dependencies indicated in lockfiles"
+    echo "    upgrade"
+    echo "        Figures out what the latest version of all dependencies is, upgrades"
+    echo "        the lockfiles, and then does a fetch of them."
+    echo "    run <url>"
+    echo "        Runs your alloapp and connects it to <url>"
+    exit
+}
+
+do_upgrade () {
+    echo "Upgrading allonet..."
+    mkdir -p "$HERE/lib"
+    $LUAJIT "$HERE/assist.lua" "$HERE" upgrade "${1-}"
+}
+
+do_fetch () {
+    echo "Fetching allonet..."
+    mkdir -p "$HERE/lib"
+    $LUAJIT "$HERE/assist.lua" "$HERE" fetch
+}
+
+do_run () {
+    $LUAJIT "$HERE/boot.lua" "$HERE/.." $*
+}
+
+if [ "$#" -lt 1 ]; then
+    do_help
+    exit
+fi
+
+case $1 in
+    upgrade )
+        do_upgrade ${2-}
+    ;;
+    fetch )
+        do_fetch
+    ;;
+    run )
+        if [ "$#" -lt 2 ]; then
+            do_help
+            exit
+        fi
+        do_run "${@:2}"
+    ;;
+    * )
+        do_help
+    ;;
+esac
