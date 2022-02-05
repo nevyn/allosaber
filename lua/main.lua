@@ -8,6 +8,8 @@ local Menu = require("menu")
 
 assets = {
     quit = ui.Asset.File("images/quit.png"),
+    arrow = ui.Asset.File("images/arrow.png"),
+    dot = ui.Asset.File("images/dot.png"),
 }
 app.assetManager:add(assets)
 
