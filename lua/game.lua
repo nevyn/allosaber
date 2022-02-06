@@ -226,6 +226,12 @@ function NoteBlock:_init(meta)
     elseif self.meta._cutDirection == 8 then
         self.arrow:setTexture(assets.dot)
     end
+    -- todo: more cut directions: 
+    -- 4 	Up Left
+    -- 5 	Up Right
+    -- 6 	Down Left
+    -- 7 	Down Right
+
     if self.meta._type == 3 then
         self.arrow:setTexture(assets.bomb)
     end
