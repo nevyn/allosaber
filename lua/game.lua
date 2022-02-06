@@ -195,6 +195,9 @@ function Game:spawnObstacle(obstacleMeta)
 end
 
 function Game:removeNote(noteBlock, blockIndex)
+    if not blockIndex then
+        blockIndex = tablex.find(self.noteBlocks, noteBlock)
+    end
     noteBlock:removeFromSuperview()
     table.remove(self.noteBlocks, blockIndex)
 end
@@ -241,11 +244,12 @@ function Game:checkSaberBlock(saber, block)
     if not saber.entity or not block.entity then return end
 
     local saberTransform = saber.entity.components.transform:transformFromWorld()
+    local saberQuat = mat4.to_quat(saberTransform)
     local saberLength = saber.bounds.size.height
     mat4.translate(saberTransform, saberTransform, vec3(0, -saberLength/2, 0)) -- get hilt of saber, not center
     local ray = {
         position= vec3(saberTransform * vec3()),
-        direction= vec3(0, saberLength, 0)
+        direction= saberQuat * vec3(0, saberLength, 0)
     }
 
     local blockTransform = block.entity.components.transform:transformFromWorld()
@@ -257,6 +261,7 @@ function Game:checkSaberBlock(saber, block)
     
     local collisionPoint = intersect.ray_sphere(ray, sphere)
     if collisionPoint then
+        self:removeNote(block)
         print("Saber", saber.handIndex, "hit", block.meta._type)
     end
 end
