@@ -54,7 +54,9 @@ function Game:_init(song)
     self.currentBeat = -self.introDelay * self.bps
     self.currentBeatAt = 0
     self.currentNoteIndex = 1
+    self.currentObstacleIndex = 1
     self.noteBlocks = {}
+    self.obstacleBlocks = {}
 
     local d = 6.0
     self.board = self:addSubview(ui.Cube(ui.Bounds(0, -1.0, -d/2 - 0.5,   laneWidth*4, 0.05, d)))
@@ -95,6 +97,7 @@ function Game:beat()
     local farBeat = self.currentBeat + self.farDelay*self.bps
 
     self:trySpawnNote(farBeat)
+    self:trySpawnObstacle(farBeat)
 
     if self.endBeat and self.currentBeat > self.endBeat then
         self:winGame()
@@ -129,6 +132,22 @@ function Game:trySpawnNote(farBeat)
     end
 end
 
+function Game:trySpawnObstacle(farBeat)
+    local nextObstacle = self.dat._obstacles[self.currentObstacleIndex]
+    if not nextObstacle then
+        return
+    end
+
+    if nextObstacle._time <= farBeat then
+        print("Spawning obstacle", self.currentObstacleIndex, "at", nextObstacle._time, "for farBeat", farBeat)
+        self:spawnObstacle(nextObstacle)
+        self.currentObstacleIndex = self.currentObstacleIndex + 1
+
+        -- see if next obstacle wants to be spawned too
+        self:trySpawnObstacle(farBeat)
+    end
+end
+
 function Game:spawnNote(noteMeta)
     local note = NoteBlock(noteMeta)
     note.game = self
@@ -138,9 +157,22 @@ function Game:spawnNote(noteMeta)
     note:fadeIn()
 end
 
+function Game:spawnObstacle(obstacleMeta)
+    local obstacle = ObstacleBlock(obstacleMeta, self)
+    obstacle:positionForBeat(self.currentBeat)
+    self:addSubview(obstacle)
+    table.insert(self.obstacleBlocks, obstacle)
+    obstacle:fadeIn()
+end
+
 function Game:removeNote(noteBlock, blockIndex)
     noteBlock:removeFromSuperview()
     table.remove(self.noteBlocks, blockIndex)
+end
+
+function Game:removeObstacle(obstacleBlock, blockIndex)
+    obstacleBlock:removeFromSuperview()
+    table.remove(self.obstacleBlocks, blockIndex)
 end
 
 function Game:preciseCurrentBeat()
@@ -157,12 +189,20 @@ function Game:updateBoardedNotes()
             self:removeNote(block, i)
         end
     end
+
+    for i, block in ipairs(self.obstacleBlocks) do
+        block:positionForBeat(self:preciseCurrentBeat())
+
+        local disappearBeatDelay = self.fadeDelay * self.bps
+        if self.currentBeat > block.meta._time + block.meta._duration + disappearBeatDelay then
+            self:removeObstacle(block, i)
+        end
+    end
 end
 
 class.NoteBlock(ui.Cube)
-
 function NoteBlock:_init(meta)
-    local s = 0.35
+    local s = laneWidth-0.05
     self:super(ui.Bounds(0,0,0,   s, s, s))
     self.meta = meta
     if meta._type == 0 then
@@ -223,6 +263,51 @@ function NoteBlock:fadeIn()
             path= "material.color.3",
             from= 0,
             to=   1,
+            duration = 0.3,
+            easing= "quadIn",
+        })    
+    end)
+end
+
+class.ObstacleBlock(ui.Cube)
+function ObstacleBlock:_init(meta, game)
+    self.isFullHeight = meta._type == 0
+    self:super(ui.Bounds(
+        0,
+        self.isFullHeight and 0.01 or layerHeight,
+        0,
+        laneWidth * meta._width,
+        layerHeight * (self.isFullHeight and 3 or 2),
+        meta._duration*game.bps
+    ))
+    self.meta = meta
+    self.game = game
+    self.color = {0.7, 0.3, 0.3, 0}
+end
+
+function ObstacleBlock:positionForBeat(beat)
+    local targetBeat = self.meta._time
+    local beatDistance = targetBeat - beat
+    local metersPerSecond = 15.0
+    local beatsPerSecond = self.game.bps
+    local metersPerBeat = metersPerSecond/beatsPerSecond
+    local distance = beatDistance * metersPerBeat
+    local boxWidth = self.meta._width*laneWidth
+    
+    self.bounds:moveToOrigin():move(
+        (self.meta._lineIndex-2) * laneWidth + boxWidth/2,
+        self.isFullHeight and 0.01 or layerHeight,
+        -distance
+    )
+    self:setBounds()
+end
+
+function ObstacleBlock:fadeIn()
+    self:doWhenAwake(function()
+        self:addPropertyAnimation(PropertyAnimation{
+            path= "material.color.3",
+            from= 0,
+            to=   0.9,
             duration = 0.3,
             easing= "quadIn",
         })    
