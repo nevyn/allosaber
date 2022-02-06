@@ -31,8 +31,9 @@ function MainMenu:_init()
         ui.Bounds(0,0,0,    0.6, 0.15, 0.05)
     ))
     self.playButton.label:setText("Play")
-    self.playButton.onActivated = function()
-        self.nav:push(Game("Jaroslav Beck - Beat Saber"))
+    self.playButton.onActivated = function(hand)
+        local avatar = hand:getAncestor()
+        self.nav:push(Game("Jaroslav Beck - Beat Saber", avatar))
     end
 
     local quitButton = self:addSubview(ui.Button(
@@ -73,10 +74,11 @@ function GameEndMenu:_init(song, title)
         ui.Bounds(0,-0.4,0,    0.6, 0.15, 0.05)
     ))
     replayButton.label:setText("Play again")
-    replayButton.onActivated = function()
+    replayButton.onActivated = function(hand)
+        local player = hand:getAncestor()
         local nav = self.nav
         nav:popToBottom()
-        nav:push(Game(song))
+        nav:push(Game(song, player))
     end
 end
 

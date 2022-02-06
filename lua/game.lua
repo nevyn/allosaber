@@ -2,20 +2,21 @@ local json = require("allo.json")
 
 class.Game(ui.View)
 -- https://bsmg.wiki/mapping/map-format.html#base-object-2
+-- https://www.youtube.com/watch?v=0EErG_nIl4A
 -- "_songName": "Beat Saber",
---     "_songSubName": "",
---     "_songAuthorName": "Jaroslav Beck",
---     "_levelAuthorName": "",
---     "_beatsPerMinute": 166,
---     "_songTimeOffset": 0,
---     "_shuffle": 0,
---     "_shufflePeriod": 1,
---     "_previewStartTime": 26,
---     "_previewDuration": 12,
---     "_songFilename": "song.ogg",
---     "_coverImageFilename": "cover.png",
---     "_environmentName": "BTSEnvironment",
---     "_allDirectionsEnvironmentName": "GlassDesertEnvironment",
+-- "_songSubName": "",
+-- "_songAuthorName": "Jaroslav Beck",
+-- "_levelAuthorName": "",
+-- "_beatsPerMinute": 166,
+-- "_songTimeOffset": 0,
+-- "_shuffle": 0,
+-- "_shufflePeriod": 1,
+-- "_previewStartTime": 26,
+-- "_previewDuration": 12,
+-- "_songFilename": "song.ogg",
+-- "_coverImageFilename": "cover.png",
+-- "_environmentName": "BTSEnvironment",
+-- "_allDirectionsEnvironmentName": "GlassDesertEnvironment",
 -- 
 -- _notes= {{
 --     "_time": 8,
@@ -36,7 +37,7 @@ class.Game(ui.View)
 local laneWidth = 0.4
 local layerHeight = 0.2
 
-function Game:_init(song)
+function Game:_init(song, player)
     self:super()
     self.song = song
     local songPath = "songs/"..song
@@ -57,6 +58,7 @@ function Game:_init(song)
     self.currentObstacleIndex = 1
     self.noteBlocks = {}
     self.obstacleBlocks = {}
+    self.player = player
 
     local d = 6.0
     self.board = self:addSubview(ui.Cube(ui.Bounds(0, -1.0, -d/2 - 0.5,   laneWidth*4, 0.05, d)))
@@ -68,15 +70,18 @@ function Game:awake()
     self.beatAction = app:scheduleAction(60.0/self.bpm, true, function()
         self:beat()
     end)
-    self.frameAction = app:scheduleAction(1.0/30.0, true, function()
+    self.frameAction = app:scheduleAction(1.0/60.0, true, function()
         self:frame()
     end) 
     self.app.assetManager:add(self.songAsset)
+
     self.speaker = ui.Speaker(nil, self.songAsset)
     self.speaker.startsAt = app:serverTime() + self.introDelay
     self.speaker.loopCount = 0
-    self.speaker.volume = 0.8
+    self.speaker.volume = 0.2
     self:addSubview(self.speaker)
+
+    self:addSabersToPlayer(self.player)
 end
 
 function Game:sleep()
@@ -86,6 +91,27 @@ function Game:sleep()
         self.beatAction:cancel()
         self.frameAction:cancel()
     end
+    self:removeSabersFromPlayer()
+end
+
+function Game:addSabersToPlayer(player)
+    local leftHand = player:getMatchingDescendant(function(ent)
+        local intent = ent.components.intent
+        return intent and intent.actuate_pose == "hand/left"
+    end)
+    local rightHand = player:getMatchingDescendant(function(ent)
+        local intent = ent.components.intent
+        return intent and intent.actuate_pose == "hand/right"
+    end)
+    assert(leftHand and rightHand)
+
+    self.leftSaber  = self.app:addRootView(Saber(leftHand, 0, game))
+    self.rightSaber = self.app:addRootView(Saber(rightHand, 1, game))
+end
+
+function Game:removeSabersFromPlayer()
+    self.leftSaber:removeFromSuperview()
+    self.rightSaber:removeFromSuperview()
 end
 
 function Game:beat()
@@ -318,6 +344,27 @@ function ObstacleBlock:fadeIn()
             easing= "quadIn",
         })    
     end)
+end
+
+class.Saber(ui.Cube)
+function Saber:_init(handEntity, handIndex, game)
+    self:super(ui.Bounds(0,0,0,  0.01, 0.5, 0.01))
+    local moveUp = mat4(); mat4.translate(moveUp, moveUp, vec3(0,self.bounds.size.height/2, 0))
+    self:setTransform(moveUp)
+    
+    self.handEntity = handEntity
+    self.handIndex = handIndex
+    self.game = game
+    local color = handIndex == 0 and {1,0,0,0.8} or {0,0,1,0.8}
+    self:setColor(color)
+end
+
+function Saber:specification()
+    return table.merge(Cube.specification(self), {
+        relationships= {
+            parent= self.handEntity.id
+        }
+    })
 end
 
 
