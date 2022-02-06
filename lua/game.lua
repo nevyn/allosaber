@@ -52,6 +52,7 @@ function Game:_init(song, player)
     self.introDelay = 1.0
     self.farDelay = 2.0
     self.fadeDelay = 0.2
+    self.blockSpeed = 15.0
     self.currentBeat = -self.introDelay * self.bps
     self.currentBeatAt = 0
     self.currentNoteIndex = 1
@@ -117,7 +118,7 @@ end
 function Game:beat()
     self.currentBeat = self.currentBeat + 1
     self.currentBeatAt = app:serverTime()
-    print("Beat", self.currentBeat)
+    --print("Beat", self.currentBeat)
 
     -- when, in beats, we should load notes and obstacles for
     local farBeat = self.currentBeat + self.farDelay*self.bps
@@ -125,6 +126,7 @@ function Game:beat()
     self:trySpawnNote(farBeat)
     self:trySpawnObstacle(farBeat)
 
+    -- if self.currentBeat > 16 then -- for testing winGame
     if self.endBeat and self.currentBeat > self.endBeat then
         self:winGame()
     end
@@ -132,6 +134,7 @@ end
 
 function Game:frame()
     self:updateBoardedNotes()
+    self:checkSaberCollision()
 end
 
 function Game:winGame()
@@ -149,7 +152,7 @@ function Game:trySpawnNote(farBeat)
     end
 
     if nextNote._time <= farBeat then
-        print("Spawning note", self.currentNoteIndex, "at", nextNote._time, "for farBeat", farBeat)
+        --print("Spawning note", self.currentNoteIndex, "at", nextNote._time, "for farBeat", farBeat)
         self:spawnNote(nextNote)
         self.currentNoteIndex = self.currentNoteIndex + 1
 
@@ -226,6 +229,38 @@ function Game:updateBoardedNotes()
     end
 end
 
+function Game:checkSaberCollision()
+    for si, saber in ipairs({self.leftSaber, self.rightSaber}) do
+        for bi, block in ipairs(self.noteBlocks) do
+            self:checkSaberBlock(saber, block)
+        end
+    end
+end
+
+function Game:checkSaberBlock(saber, block)
+    if not saber.entity or not block.entity then return end
+
+    local saberTransform = saber.entity.components.transform:transformFromWorld()
+    local saberLength = saber.bounds.size.height
+    mat4.translate(saberTransform, saberTransform, vec3(0, -saberLength/2, 0)) -- get hilt of saber, not center
+    local ray = {
+        position= vec3(saberTransform * vec3()),
+        direction= vec3(0, saberLength, 0)
+    }
+
+    local blockTransform = block.entity.components.transform:transformFromWorld()
+    local blockSize = block.bounds.size.height
+    local sphere = {
+        position = vec3(blockTransform * vec3()),
+        radius = blockSize / 2.0
+    }
+    
+    local collisionPoint = intersect.ray_sphere(ray, sphere)
+    if collisionPoint then
+        print("Saber", saber.handIndex, "hit", block.meta._type)
+    end
+end
+
 class.NoteBlock(ui.Cube)
 function NoteBlock:_init(meta)
     local s = laneWidth-0.05
@@ -266,7 +301,7 @@ end
 function NoteBlock:positionForBeat(beat)
     local targetBeat = self.meta._time
     local beatDistance = targetBeat - beat
-    local metersPerSecond = 15.0
+    local metersPerSecond = self.game.blockSpeed
     local beatsPerSecond = self.game.bps
     local metersPerBeat = metersPerSecond/beatsPerSecond
     local distance = beatDistance * metersPerBeat
@@ -320,7 +355,7 @@ end
 function ObstacleBlock:positionForBeat(beat)
     local targetBeat = self.meta._time
     local beatDistance = targetBeat - beat
-    local metersPerSecond = 15.0
+    local metersPerSecond = self.game.blockSpeed
     local beatsPerSecond = self.game.bps
     local metersPerBeat = metersPerSecond/beatsPerSecond
     local distance = beatDistance * metersPerBeat

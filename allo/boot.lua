@@ -42,6 +42,7 @@ pretty = require('pl.pretty')
 utils = require("pl.utils")
 vec3 = require("modules.vec3")
 mat4 = require("modules.mat4")
+intersect = require("modules.intersect")
 
 ui.App.initialLocation = nil
 if arg[3] then
