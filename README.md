@@ -1,9 +1,7 @@
-# Alloverse app template
+# Allosaber
 
-This is an Alloverse app. You can
-[read about making apps](https://docs.alloverse.com/) here.
-
-**psst, you should summarize and explain your project here!**
+An AlloApp clone of BeatSaber. Just as an experiment of what's possible
+with the allonet platform.
 
 ## Developing
 
@@ -15,16 +13,32 @@ To start the app and connect it to an Alloplace for testing, run
 ./allo/assist run alloplace://nevyn.places.alloverse.com
 ```
 
-## Documentation
+## Todo
 
-We've published an early version of a [comprehensive documentation website](https://docs.alloverse.com/), though it's not exhaustive yet. Additional documentation
-is provided in your `lua/main.lua`.
-
-The implementation of the [UI library](https://docs.alloverse.com/classes/) also has some documentation inline which you can use while we're
-improving the docs website. Navigate to `allo/deps/alloui/lua/alloui` and have a look at the various
-lua files in there, and in particular the various UI elements under `views`. Some various views include:
-
-- Surface, a flat surface to put stuff on
-- Label, for displaying text
-- Button, for clicking on
-- Navstack, for drilling into nested data
+- [x] Reading level file
+- [x] Notes
+- [x] Bombs
+- [x] Obstacles
+- [ ] Diagonal notes
+- [ ] Sabers
+- [ ] Cutting blocks
+- [ ] Block debris
+- [ ] Life
+- [ ] Damage by obstacles
+- [ ] Lose life by missing blocks
+- [ ] Gain life by hitting blocks
+- [ ] Move blocks with PropertyAnimations instead of frame-by-frame
+- [ ] Score and multiplier counting
+- [ ] List levels with info, cover image and preview music in menu
+- [ ] Pick level and difficulty from menu
+- [ ] Level preview music
+- [ ] Support for drag'n'dropping in levels
+- [ ] Replace bundled levels with public domain levels
+- [ ] Support for shuffle and shufflePeriod
+- [ ] _songTimeOffset
+- [ ] Sound effects when hitting/missing/obstacling
+- [ ] noteJumpMovementSpeed / Jump Duration from level file
+- [ ] Environment effects
+- [ ] Prettier models for notes and bombs
+- [ ] Prettier obstacles
+- [ ] Highscore
